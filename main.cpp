@@ -13,7 +13,7 @@ int main()
     
     */
 
-    auto vm = sf::VideoMode(1300, 750);
+    auto vm = sf::VideoMode(1500, 800);
     sf::RenderWindow window(vm, "Movements");
     window.setFramerateLimit(60);
 
@@ -45,8 +45,13 @@ int main()
     earth.body.setTexture(earthTexture, true);
 
     auto reverseForwardForce = sf::Vector2f(0, 0);
+    auto enterForce = sf::Vector2f(0, 0);
+
     float torque = 0.0f;
-    bool uniform_flag = false, reverse_flag = false, reverse_finished_flag = false;
+    bool uniform_flag = false, reverse_flag = false;
+    bool reverse_finished_flag = false, enter_finished_flag = false, land_finished_flag = false;
+
+    float rotationFace2Earth = 0.0f;
 
     while (window.isOpen())
     {
@@ -68,7 +73,7 @@ int main()
         }
 
         if (!uniform_flag) {
-            torque = spaceship.getTorqueByEarth(earth);
+            torque = spaceship.getTorqueByEarth(earth) * 10.0f;
             std::cout << "로켓이 " << torque << "(torque) 힘을 받아 등속 원운동" << std::endl;
         }
         else {
@@ -78,20 +83,41 @@ int main()
             reverseForwardForce = spaceship.getForceToReverseFoward();
         }
         if (reverse_finished_flag) {
-            //역추진 완료, 지구에 착륙
+            float h = earth.distanceFromSurface(spaceship);
+            std::cout << h << std::endl;
+            if (!enter_finished_flag) std::cout << "로켓 지구 재진입 중" << std::endl;
+            if (h < 1.0f && !land_finished_flag) {
+                enter_finished_flag = true;
+                land_finished_flag = true;
+                std::cout << "착륙 완료" << std::endl;
+            }
+            else {
+                rotationFace2Earth = spaceship.getObjectRotationFace2Earth(earth);
+                spaceship.body.setRotation(rotationFace2Earth);
+            }
+        }
+        if (!reverse_finished_flag) {
+            spaceship.body.setRotation(spaceship.physics.getObjectRotation());
         }
 
-        spaceship.physics.updateAddForce(reverseForwardForce, deltaTime);
-        spaceship.physics.updateAngularPosition(torque, altitude, reverse_finished_flag, deltaTime);
-        
+        if (!land_finished_flag) {
+            spaceship.physics.updateAngularPosition(torque, altitude, reverse_finished_flag, enter_finished_flag, deltaTime);
+            spaceship.physics.updateAddForce(reverseForwardForce, deltaTime);
+        }
+
         if (spaceship.physics.isStopped() && reverse_flag) {
             std::cout << "로켓의 역추진 완료" << std::endl;
             reverse_finished_flag = true;
             reverse_flag = false;
-            reverseForwardForce = sf::Vector2f(0, 0);
+            enterForce = -1.0f * reverseForwardForce;
+            reverseForwardForce = enterForce * 0.1f;
         }
 
+        spaceship.body.setPosition(spaceship.physics.getSFMLCoordinate(window.getSize()));
+
+
         window.clear();
+        
         spaceship.update(&window, deltaTime);
         earth.update(&window, deltaTime);
 

@@ -1,3 +1,5 @@
+#pragma once
+
 #include <SFML/Graphics.hpp>
 #include "Movable.hpp"
 
@@ -33,6 +35,17 @@ namespace m {
 			
 		}
 
+		float distanceFromSurface(Object obj) {
+			sf::Vector2f center1 = body.getPosition();
+			sf::Vector2f center2 = obj.body.getPosition();
+			float dx = center2.x - center1.x;
+			float dy = center2.y - center1.y;
+			
+			float distance = std::sqrt(dx * dx + dy * dy);
+			distance -= (size.x) / 2 + (obj.size.y) / 2;
+			return distance;
+		}
+
 		virtual void update(sf::RenderWindow* window, float deltaTime) {
 			body.setPosition(physics.getSFMLCoordinate(window->getSize()));
 			//std::cout << body.getPosition().x << " " << body.getPosition().y << std::endl;
@@ -54,6 +67,12 @@ namespace m {
 			return earthRadius * (physics.getMass() * g);
 		}
 
+		float getObjectRotationFace2Earth(Earth earth) {
+			sf::Vector2f diff = earth.body.getPosition() - body.getPosition();
+			float angleRadians = std::atan2(diff.y, diff.x);
+			return angleRadians * (180.0f / M_PI) + ANGLE_ADJUST + 180;
+		}
+
 		sf::Vector2f getForceToReverseFoward() {
 			auto dv = physics.angularDv();
 			auto powvec = sf::Vector2f(dv.x * dv.x, dv.y * dv.y);
@@ -66,8 +85,6 @@ namespace m {
 		}
 
 		virtual void update(sf::RenderWindow* window, float deltaTime) {
-			body.setRotation(physics.getObjectRotation());
-			body.setPosition(physics.getSFMLCoordinate(window->getSize()));
 			window->draw(body);
 		}
 	};

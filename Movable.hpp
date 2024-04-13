@@ -2,6 +2,7 @@
 
 #include <iostream>
 #include <cmath>
+
 # define M_PI 3.14159265358979323846
 # define ADJUST -1.0f
 # define ANGLE_ADJUST 90
@@ -41,14 +42,16 @@ namespace m {
 			this->velocity += a * deltaTime; //a * dt
 			this->position += this->velocity * deltaTime; //this-velocity * dt
 		}
-		void updateAngularPosition(float torque, float r, bool stop_rotate, float deltaTime) {
+		void updateAngularPosition(float torque, float r, bool stop_rotate, bool stop_revol, float deltaTime) {
 			torque *= ADJUST;
 
 			float alpha = torque / mass;
 			this->angularVelocity += alpha * deltaTime;
 			this->angle += angularVelocity * deltaTime;
-			this->angularPosition = sf::Vector2f(cos(angle) * r, sin(angle) * r) + this->position;
-
+			if (!stop_revol)
+				this->angularPosition = sf::Vector2f(cos(angle) * r, sin(angle) * r) + this->position;
+			else
+				this->angularPosition = this->position;
 			if (!stop_rotate) {
 				sf::Vector2f tangentDirection(-angularPosition.y, angularPosition.x);
 				this->deltaCircularVelocity = angularVelocity * tangentDirection;
@@ -61,6 +64,7 @@ namespace m {
 			pos += sf::Vector2f(windowSize.x / 2, windowSize.y / 2);
 			return pos;
 		}
+
 
 		float getObjectRotation() {
 			float magnitude = std::sqrt(deltaCircularVelocity.x * deltaCircularVelocity.x + deltaCircularVelocity.y * deltaCircularVelocity.y);
