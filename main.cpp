@@ -68,7 +68,7 @@ int main()
         }
 
         if (!uniform_flag) {
-            torque = spaceship.getTorqueByEarth(earth) * 4;
+            torque = spaceship.getTorqueByEarth(earth);
             std::cout << "로켓이 " << torque << "(torque) 힘을 받아 등속 원운동" << std::endl;
         }
         else {
