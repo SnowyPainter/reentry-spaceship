@@ -44,9 +44,9 @@ int main()
     spaceship.body.setTexture(spaceshipTexture, true);
     earth.body.setTexture(earthTexture, true);
 
-    auto force = sf::Vector2f(0, 0);
+    auto reverseForwardForce = sf::Vector2f(0, 0);
     float torque = 0.0f;
-    bool uniform_flag = false;
+    bool uniform_flag = false, reverse_flag = false, reverse_finished_flag = false;
 
     while (window.isOpen())
     {
@@ -58,30 +58,46 @@ int main()
                 window.close();
             if (event.type == sf::Event::KeyPressed) {
                 auto keycode = event.key.code;
-                if (keycode == sf::Keyboard::Up) {
-                    force.x += 10.0f;
-                    force.y += 10.0f;
+                
+                if (!reverse_flag && keycode == sf::Keyboard::Space) {
+                    reverse_flag = true;
+                    reverseForwardForce = spaceship.getForceToReverseFoward();
+                    std::cout << "로켓이 " << reverseForwardForce.x << ", " << reverseForwardForce.y << " 힘으로 역추진" << std::endl;
                 }
             }
         }
 
         if (!uniform_flag) {
-            torque = spaceship.getTorqueByEarth(earth);
+            torque = spaceship.getTorqueByEarth(earth) * 4;
             std::cout << "로켓이 " << torque << "(torque) 힘을 받아 등속 원운동" << std::endl;
         }
         else {
             torque = 0.0f;
         }
+        if (reverse_flag) {
+            reverseForwardForce = spaceship.getForceToReverseFoward();
+        }
+        if (reverse_finished_flag) {
+            //역추진 완료, 지구에 착륙
+        }
 
-        spaceship.physics.updateAddForce(force, deltaTime);
-        spaceship.physics.updateAngularPosition(torque, altitude, deltaTime);
-        uniform_flag = true;
+        spaceship.physics.updateAddForce(reverseForwardForce, deltaTime);
+        spaceship.physics.updateAngularPosition(torque, altitude, reverse_finished_flag, deltaTime);
+        
+        if (spaceship.physics.isStopped() && reverse_flag) {
+            std::cout << "로켓의 역추진 완료" << std::endl;
+            reverse_finished_flag = true;
+            reverse_flag = false;
+            reverseForwardForce = sf::Vector2f(0, 0);
+        }
 
         window.clear();
         spaceship.update(&window, deltaTime);
         earth.update(&window, deltaTime);
 
         window.display();
+        
+        uniform_flag = true;
     }
 
     return 0;

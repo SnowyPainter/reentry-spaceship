@@ -54,10 +54,20 @@ namespace m {
 			return earthRadius * (physics.getMass() * g);
 		}
 
+		sf::Vector2f getForceToReverseFoward() {
+			auto dv = physics.angularDv();
+			auto powvec = sf::Vector2f(dv.x * dv.x, dv.y * dv.y);
+			auto f = ADJUST * ((physics.getMass() * powvec) / altitude);
+			float x_sign = dv.x > 0 ? 1 : -1;
+			float y_sign = dv.y > 0 ? 1 : -1;
+			f.x *= x_sign * ADJUST;
+			f.y *= y_sign * ADJUST;
+			return f;
+		}
+
 		virtual void update(sf::RenderWindow* window, float deltaTime) {
 			body.setRotation(physics.getObjectRotation());
 			body.setPosition(physics.getSFMLCoordinate(window->getSize()));
-			//std::cout << body.getPosition().x << " " << body.getPosition().y << std::endl;
 			window->draw(body);
 		}
 	};
